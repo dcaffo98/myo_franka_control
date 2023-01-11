@@ -1,0 +1,77 @@
+<launch>
+	<arg name="port" default="/dev/ttyACM0" doc="Port used by the Myo dongle. Check it with 'ls /dev/' and look for ttyACM0 for instance. You need to provide the full path." />
+	<arg name="use_caffeine" default="false" doc="Periodically sends a vibration command to the Myo to keep it alive" />
+	<arg name="caffeine_sec" default="7" doc="caffeine frequency (in seconds)" />
+	<arg name="use_control_pub" default="true" />
+	<arg name="use_control_exec" default="true" />
+	<arg name="use_ekf" default="false" />
+	<arg name="use_shoe" default="true" />
+	<arg name="madgwick_child_frame" default="myo_ee" />
+	<arg name="use_ekf_twist_pub" default="true" />
+	<arg name="use_gazebo_gui" default="true" />
+	<arg name="use_gesture_verbose" default="false" />
+	<arg name="cmd_exec_mode" default="mom" />
+	<arg name="model_path" default="$(find myo_franka_control)/svm.pkl" />
+
+	<rosparam command="load" file="$(find myo_franka_control)/config/config.yaml" />
+
+	<param name="/cmd_executor/mode" value="$(arg cmd_exec_mode)" />
+	<param name="/myo/madgwick/child_frame_id" value="/$(arg madgwick_child_frame)" />
+	<param name="/myo/imu_filter/use_shoe" value="$(arg use_shoe)" />
+	<param name="/ml/trained_model_path" value="$(arg model_path)" />
+
+	<include file="$(find panda_gazebo)/launch/panda_world.launch">
+		<arg name="gui" value="$(arg use_gazebo_gui)" />
+		<arg name="use_custom_action_servers" value="false" />
+		<arg name="use_sim_time" value="true" />
+	</include>
+	
+	<node pkg="myo_franka_control" type="gazebo_healthcheck.py" name="gazebo_healthcheck" output="screen" />
+	
+	<node pkg="myo_franka_control" type="init_pose_publisher.py" name="init_pose_publisher" /> 
+
+	<node pkg="tf2_ros" type="static_transform_publisher" name="world_odom_static_publisher" 
+		args="0 0 0 0 0 0 world odom" />                                                     
+                                                            
+	<node pkg="tf2_ros" type="static_transform_publisher" name="odom_ee_init_static_publisher"
+	    args="0 0 0 0 0.001 3.142 odom ee_init" /> 
+	
+	<node pkg="myo_franka_control" type="myo_launch.py" name="myo_launch" output="screen" args="$(arg port)" />
+	
+	<node pkg="myo_franka_control" type="myo_raw_preprocess.py" name="myo_raw_preprocess" />
+
+	<node pkg="myo_franka_control" type="myo_caffeine.py" name="myo_caffeine" if="$(arg use_caffeine)" >
+		<param name="sec" value="$(arg caffeine_sec)" />
+	</node>
+	
+	<node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_node"
+		args="_use_mag:=false _remove_gravity_vector:=true _fixed_frame:=odom _gain:=0.1 _stateless:=false _world_frame:=enu _publish_tf:=true" />
+
+	<node pkg="myo_franka_control" type="cmd_publisher.py" name="cmd_publisher" output="screen" if="$(arg use_control_pub)" /> 
+	
+	<node pkg="myo_franka_control" type="cmd_executor.py" name="cmd_executor" output="screen" if="$(arg use_control_exec)" />  
+	
+	<node pkg="myo_franka_control" type="gripper_controller.py" name="gripper_controller" output="screen" />
+
+	<node pkg="myo_franka_control" type="gesture_recognition.py" name="gesture_recognition" output="screen" if="$(eval arg('use_gesture_verbose') == true)" />
+	<node pkg="myo_franka_control" type="gesture_recognition.py" name="gesture_recognition" output="log" if="$(eval arg('use_gesture_verbose') == false)" />
+	
+	<node pkg="myo_franka_control" type="ekf_input_imu_publisher.py" name="ekf_input_imu_publisher" output="screen" />
+
+	<node pkg="myo_franka_control" type="ekf_input_twist_publisher.py" name="ekf_input_twist_publisher" />
+	
+	<node pkg="myo_franka_control" type="ekf_twist_publisher.py" name="ekf_twist_publisher" />
+
+	<group if="$(arg use_ekf)">    		
+	    <node pkg="robot_localization" type="ekf_localization_node"                          
+	        name="rl_ekf_odom" clear_params="true" output="log" >                                          
+			<rosparam command="load" file="$(find myo_franka_control)/config/rl_odom.yaml" />
+		</node>                                                                              
+	</group>      
+	
+	<group unless="$(arg use_ekf)">
+		<node pkg="myo_franka_control" type="naive_sensor_fusion.py" name="naive_sensor_fusion" />
+	</group>
+
+
+</launch>

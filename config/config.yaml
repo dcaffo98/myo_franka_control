@@ -1,0 +1,108 @@
+myo:
+  frame_id: /myo_raw
+  reference_frame_id: /myo_base
+  topic_imu: /myo_raw/myo_imu
+  topic_ori: /myo_raw/myo_ori
+  topic_ori_deg: /myo_raw/myo_ori_deg
+  topic_emg: /myo_raw/myo_emg
+  imu_freq: 200
+
+  madgwick:
+    input_topic: /imu/data_raw
+    topic: /imu/data
+    child_frame_id: /myo_ee
+  
+  imu_filter:
+    w_size: 10 
+    use_shoe: True
+    shoe_gamma: 45
+
+
+ekf:                                 
+  input:                             
+    imu:                             
+      input_topic: /imu/data         
+      topic: /ekf/input/imu          
+      frame_name: virtual_ee         
+    pose:                            
+      freq: 20                       
+      first_msg_published: false     
+      frame_name: odom               
+      position:                      
+        topic: /ekf/input/position   
+      orientation:                   
+        topic: /ekf/input/orientation
+    twist:                           
+      topic: /ekf/input/twist        
+      frame_name: virtual_ee         
+      freq: 50                       
+                                     
+
+franka:                     
+  workspace:                
+    secondary:              
+      xy_radius: 0.85       
+      max_z: 1.195          
+  gripper:                  
+      min_x: 0.0            
+      max_x: 0.080          
+      ref_v: 0.025          
+      cooldown_interval: 1.2
+      delta_x: 0.006        
+
+
+cmd_publisher:                                      
+  ee_init_pose: [0.307, 0., 0.59, -3.142, 0.001, 0.]
+  input_topic: /odometry/filtered                   
+  topic: /cmd_publisher/kcc_cmd                     
+   
+
+cmd_executor:                                       
+  mode: mom                                         
+  cmd_timeout: 1.0                                  
+  mom_gain: 0.5                                     
+  gain_matrix: [1.0,   0.,   0.,   0.,   0.,   0.,  
+                0.,    1.0,  0.,   0.,   0.,   0.,  
+                0.,    0.,   1.0,  0.,   0.,   0.,  
+                0.,    0.,   0.,   1.0,  0.,   0.,  
+                0.,    0.,   0.,   0.,   1.0,  0.,  
+                0.,    0.,   0.,   0.,   0.,   1.0] 
+
+
+moveit:                                                                                                              
+  healthcheck:                                                                                                       
+    topic: /move_group/status                                                                                        
+    cooldown: 1                                                                                                      
+ 
+
+gazebo:                                                                                                              
+  healthcheck:                                                                                                       
+    service: /panda_simulator/velocity_joint_velocity_controller/joints/panda_joint7_controller/pid/set_parameters   
+    cooldown: 1                                                                                                      
+ 
+
+frames:                                                                                                              
+    virtual_ee_init_frame_id: virtual_ee_init                                                                        
+    ee_init_frame_id: ee_init                                                                                        
+
+
+ml:                                                                                                                  
+    gripper_mode: True                                                                                               
+    twist_mode: True                                                                                                 
+    sample_window_size: 30                                                                                           
+    cooldown_window_size: 20                                                                                         
+    ref_forward_twist: [0, 0., 0.2]                                                                                  
+    gesture_topic: /gesture                                                                                          
+               
+
+naive_sensor_fusion:                                                                                                 
+    freq: 20                                                                                                         
+    input:                                                                                                           
+        imu:                                                                                                         
+            topic: /ekf/input/imu                                                                                    
+        twist:                                                                                                       
+            topic: /ekf/input/twist                                                                                  
+    topic: /odometry/filtered                                                                                        
+    child_frame_id: virtual_ee                                                                                       
+                                                                                                                     
+
