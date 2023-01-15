@@ -2,7 +2,8 @@
 A ros package for intuitive control of the Franka Emika manipulator using the Myo armband.
 \
 \
-![ezgif-2-0d2f8bddbe](https://user-images.githubusercontent.com/54015844/211851424-28c518b8-18df-4d8b-80c9-b553009f16f6.gif)
+![advanced_control_compressed_a_lot_2](https://user-images.githubusercontent.com/54015844/212556460-6b8725cf-bd62-4b87-bb70-384acb106415.gif)
+
 ### How to run
 Provided that **you have a Myo armband at hand** and all the [dependencies](https://github.com/dcaffo98/myo_franka_control/blob/master/package.xml#L51) are installed, go to your catkin workspace and run
 ```
@@ -28,5 +29,5 @@ for the advanced control loop, which aims to [maximise the measurement of manipu
 ***Currently, the user is assumed to hold a position in which the hand of the arm wearing the Myo is facing downward (think as if your hand was the gripper of the manipulator in its initial pose in the gazebo simulation) until the simulation is fully loaded.***
 \
 \
-![ezgif-2-a05ee44d81](https://user-images.githubusercontent.com/54015844/211850722-752c076b-305d-43c0-816c-e14fcef77d95.gif)
-![ezgif-2-4643a0f39e](https://user-images.githubusercontent.com/54015844/211850052-4bec1427-a04f-4698-993e-f3f93fa16d9d.gif)
+![ml_gripper_2x_cropped_compressed](https://user-images.githubusercontent.com/54015844/212556767-f156b0e8-fc7a-420e-b175-e6df68c26cc8.gif)
+![ml_control_compressed](https://user-images.githubusercontent.com/54015844/212556654-1ef5cd8b-f1c2-4f2d-bdcc-52a5c53c31f7.gif)
